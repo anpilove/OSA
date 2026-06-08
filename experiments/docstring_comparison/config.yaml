@@ -1,0 +1,48 @@
+# Конфигурация экспериментов сравнения OSA / OSA-C / RepoAgent
+# Все пути — относительно корня experiments/
+
+# Целевой репозиторий, на котором гоняются генераторы docstring
+target_repo:
+  url: https://github.com/psf/requests
+  # Локальная копия (см. scripts/00_clone_target.sh)
+  path: data/requests
+
+# LLM, используемая всеми тремя генераторами и G-Eval судьёй (одинаково — для честности)
+llm:
+  api: openai
+  base_url: https://openrouter.ai/api/v1
+  model: qwen/qwen3-30b-a3b-instruct-2507
+  temperature: 0.2
+  judge_temperature: 0.1
+
+# Где лежат сгенерированные docstring-варианты
+variants:
+  osa:
+    # OSA legacy: ветка main без topological scheduling и helper-context
+    # Можно переопределить через OSA_LEGACY_REPO=/path/to/OSA
+    repo_path: ${OSA_LEGACY_REPO:-../../}
+    branch: main
+    output_dir: data/requests_osa
+  osa_c:
+    # OSA-C: ветка с улучшениями (research/351-ast-parsing)
+    # Можно переопределить через OSA_C_REPO=/path/to/OSA
+    repo_path: ${OSA_C_REPO:-../../}
+    branch: research/351-ast-parsing
+    output_dir: data/requests_osa_c
+  ra:
+    # RepoAgent: stock
+    # Нужно указать путь к локальному RepoAgent, если запускается generate-ra
+    repo_path: ${REPOAGENT_REPO:-../RepoAgent}
+    output_dir: data/requests_ra
+    hierarchy_file: data/requests_ra/.project_doc_record/project_hierarchy.json
+
+# Пары для сравнения
+pairs:
+  - {name: osa_vs_osa_c,  a: osa,   b: osa_c}
+  - {name: osa_c_vs_ra,   a: osa_c, b: ra}
+  - {name: osa_vs_ra,     a: osa,   b: ra}
+
+# Параметры G-Eval
+geval:
+  rate_limit: 5    # параллельных запросов
+  retries: 3
